@@ -2,6 +2,7 @@ import cPickle
 import xmlrpclib
 import base64
 from Crypto.PublicKey import RSA
+#This is user
 cloudStorage = xmlrpclib.ServerProxy("http://localhost:8000/", allow_none=True)
 keyDistributor = xmlrpclib.ServerProxy("http://localhost:8001/", allow_none=True)
 def readKey():
