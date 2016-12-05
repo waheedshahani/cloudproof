@@ -1,3 +1,4 @@
+import hashlib
 import cPickle
 import xmlrpclib
 import base64
@@ -14,20 +15,12 @@ def encryptAndEncode(plainText,pub_key):
     return base64.b64encode(encrypted)
 def decodeAndDecrypt(base64cipher,key):
      base64decoded=base64.b64decode(base64cipher)
-     print ("Here")
      return key.decrypt(base64decoded)
-
 def put(client_Put_Attest,block_Id,key_block_Version_No,new_Version_No,New_Hash,content,hashedSignedAttestation):
     global cloudStorage
-    #client_Put_Attest=client_Put_Attest
-    #block_Id=block_Id
-    #key_block_Version_No=''
-    #new_Version_No=new_Version_No
-    #New_Hash=''
-    #content=content
-    #hashedSignedAttestation=''
+    hash_object = hashlib.md5(content)
+    New_Hash=hash_object.hexdigest()
     cloudStorage.put(client_Put_Attest,block_Id,key_block_Version_No,new_Version_No,New_Hash,content,hashedSignedAttestation)
-
 def get(block_Id):
     global cloudStorage
     [block_Version,content,cloud_get_attestation]=cloudStorage.get(block_Id)
@@ -35,8 +28,6 @@ def get(block_Id):
    
 pub_key=()
 pri_key=()
-
-#new_block_version='101'
 user='u1'
 block_id=1
 #rw='w'
@@ -51,7 +42,6 @@ if rw == 'w':
     pri_key=cPickle.loads(keyDistributor.getKey(1,'w',user))
     [block_version_no,cipherContent,cloud_get_attestation]=get(block_id)
     print ("Current Version:%s" %block_version_no)
-    print ("Cipher:%s" %cipherContent)
     print ("Current Content:%s" %decodeAndDecrypt(cipherContent,pri_key))
     print ("Cloud Get Attestation:%s" %cloud_get_attestation)
     newContent=raw_input("Lets Modify content to?:")
