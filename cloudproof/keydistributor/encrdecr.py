@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import os
 import base64
 import cPickle
 import xmlrpclib
@@ -15,12 +16,43 @@ acl={1:{'r':['u1','u2','u3'],'w':['u1']},\
      3:{'r':['u3','u1','u2'],'w':['u3']},\
      4:{'r':['u4','u5'],'w':['u4']},\
      5:{'r':['u5','u4'],'w':['u5']},}
+#Generating secret keys for CBC counter mode cryptography.
+blockKeys={1:os.urandom(32),2:os.urandom(32),3:os.urandom(32),4:os.urandom(32),5:os.urandom(32)}
+#This is secret key. any user with read access or write access can get this key. This is only used for en(de)crypting data.
+def getSecretKey(block_Id,user):
+     with open('temp','w') as temp:
+         cPickle.dump(blockKeys[1],temp)
+     f=open('temp','r').read()
+     return f
+
+#This key pair is used signing and verification. private key is called signing key and public key is called verification key. 
+def getSigningKey(block_Id,user):
+     dict1= acl[block_Id]
+     userList=dict1[rw]
+     if user not in userList:
+         return 0
+     rsakey=RSA.importKey(f)
+     f=open('%s.pri_key' %block_Id,'r').read()
+     with open('temp','w') as temp:
+         cPickle.dump(rsakey,temp)
+     f=open('temp','r').read()
+def getPublicKey(block_id,user):
+     dict1= acl[block_Id] #dict1 is dictionary
+     #getting list of user for rw of particular block.
+     userList=dict1[rw]
+     if user not in userList:
+         return 0
+     rsakey=RSA.importKey(f)
+     f=open('%s.pri_key' %block_Id,'r').read()
+     with open('temp','w') as temp:
+         cPickle.dump(rsakey,temp)
+     f=open('temp','r').read()
+
 
 def getKey(block_Id,rw,user):
      dict1= acl[block_Id] #dict1 is dictionary
      #getting list of user for rw of particular block.
      userList=dict1[rw]
-     print userList
      if user not in userList:
          return 0
      if rw == 'r':
@@ -31,8 +63,7 @@ def getKey(block_Id,rw,user):
      print rsakey
      #Converting object into character stream for serialization
      with open('temp','w') as temp:
-         cPickle.dump(rsakey,temp)
-     
+         cPickle.dump(rsakey,temp) 
      f=open('temp','r').read()
 #     print (f)
      #b64key=base64.b64encode(f)
@@ -56,6 +87,9 @@ if keyGenerateFlag==1:
 keyServer=SimpleXMLRPCServer(("localhost", 8001), allow_none=True)
 print ("Listening on port 8001...")
 keyServer.register_function(getKey, "getKey")
+keyServer.register_function(getSecretKey,"getSecretKey")
+keyServer.register_function(getSigningKey,"getSigningKey")
+keyServer.register_function(getPublicKey,"getPublicKey")
 keyServer.serve_forever()
 
 
