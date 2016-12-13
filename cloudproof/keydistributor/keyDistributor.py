@@ -11,13 +11,13 @@ totalKeysNeeded=6
 keyGenerateFlag=0
 #src_data = 'To be, or not to be - that is the question.'
 #print `src_data`
-acl={1:{'r':['u1','u2','u3','cloud'],'w':['u1']},\
-     2:{'r':['u2','u1','u3','cloud'],'w':['u2']},\
-     3:{'r':['u3','u1','u2','cloud'],'w':['u3']},\
-     4:{'r':['u4','u5','cloud'],'w':['u4']},\
-     5:{'r':['u5','u4','cloud'],'w':['u5']},}
+acl={0:{'r':['u1','u2','u3','cloud'],'w':['u1','u2','u3']},\
+     1:{'r':['u2','u1','u3','cloud'],'w':['u1','u2']},\
+     2:{'r':['u3','u1','u2','cloud'],'w':['u1','u3']},\
+     3:{'r':['u4','u5','cloud'],'w':['u1','u4']},\
+     4:{'r':['u5','u4','cloud'],'w':['u1','u5']},}
 #Generating secret keys for CBC counter mode cryptography.
-blockKeys={1:os.urandom(32),2:os.urandom(32),3:os.urandom(32),4:os.urandom(32),5:os.urandom(32)}
+blockKeys={0:os.urandom(32),1:os.urandom(32),2:os.urandom(32),3:os.urandom(32),4:os.urandom(32),5:os.urandom(32)}
 #This method receives any object and returns pickled version which can be serialized. 
 #on receiver end this should be received using cPickle.loads and gives back object.....
 def picklethis(object):
