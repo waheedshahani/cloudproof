@@ -24,6 +24,7 @@ def picklethis(object):
     with open('temp','w') as temp:
         cPickle.dump(object,temp)
     f=open('temp','r').read()
+    os.remove('temp')
     return f
 def unpicklethis(object):
     return cPickle.loads(object)
@@ -32,6 +33,7 @@ def getSecretKey(block_Id,user):
      with open('temp','w') as temp:
         cPickle.dump(blockKeys[block_Id],temp)
      f=open('temp','r').read()
+     os.remove('temp')
      return f
 
 #This key pair is used signing and verification. private key is called signing key and public key is called verification key. 
@@ -70,6 +72,7 @@ def getKey(block_Id,rw,user):
      with open('temp','w') as temp:
          cPickle.dump(rsakey,temp) 
      f=open('temp','r').read()
+     os.remove('temp')
 #     print (f)
      #b64key=base64.b64encode(f)
      #f.close()
