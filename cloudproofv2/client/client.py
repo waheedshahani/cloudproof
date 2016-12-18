@@ -30,10 +30,8 @@ class cloudUser():
             self.nonce=self.setNonce()
             [self.block_Version_No,self.b64,self.hashSign,self.key_block_Version_No,self.cloud_Get_Attest,self.chain_Hash]=cloudStorage.get(self.block_Id,self.username,self.nonce)
             self.setSecretKey()
+            self.decodeAndDecrypt()
             self.hashSign=p.unpickle(self.hashSign)
-            if self.content !=0:
-                 pass
- #               keyDistributor.putAttestations(self.username,"cloudgetattestation",self.block_Id,self.block_Version_No,self.cloud_Get_Attest)
         else:
             print "I need to put dummy record first"
     
@@ -46,7 +44,8 @@ class cloudUser():
     def verifyCloudGetAttestation(self):
         self.cloudPublicKey=p.unpickle(cloudStorage.getPublicKey())
         block_hashPickled=p.pickle(self.block_hash)
-        self.concat=str(self.block_Id)+str(self.key_block_Version_No)+str(self.block_Version_No)+block_hashPickled+self.nonce+self.chain_Hash
+        self.key_block_Version_NoPickled=p.pickle(self.key_block_Version_No)
+        self.concat=str(self.block_Id)+str(self.key_block_Version_NoPickled)+str(self.block_Version_No)+block_hashPickled+self.nonce+self.chain_Hash
         self.hashOfElements=SHA256.new(self.concat).hexdigest()
 #Verifying verification of attestation signature
         if (self.cloudPublicKey.verify(self.hashOfElements,p.unpickle(self.cloud_Get_Attest))):
@@ -66,15 +65,12 @@ class cloudUser():
         self.blockSigningKey=RSA.importKey(self.blockSigningKey)
         self.block_hash=SHA256.new(self.b64).hexdigest()
         self.block_hashPickled=p.pickle(self.block_hash)
-        self.concat=str(self.block_Id)+str(p.pickle(self.key_block_Version_No))+str(self.block_Version_No)+self.block_hashPickled+self.b64
+        self.concat=str(self.block_Id)+str(p.pickle(self.key_block_Version_No))+str(self.block_Version_No)+self.block_hashPickled
         self.hashOfElements=SHA256.new(self.concat).hexdigest()
         self.clientPutAttestation=self.blockSigningKey.sign(self.hashOfElements,'')
         return 1
 #    concat=str(block_Id)+str(key_block_Version_No)+str(new_Version_No)+new_Hash+encryptedEncodedContent
     def put(self,client_Put_Attest,block_Id,key_block_Version_No,new_Version_No,New_Hash,content,hashSign):
-#        self.setSecretKey()
-#        self.setNewkey_block_Version_No()
-#        self.encryptAndEncode()
         [returnCode,cloudReply,chain_Hash]=cloudStorage.put(client_Put_Attest,block_Id,p.pickle(self.key_block_Version_No),new_Version_No,New_Hash,self.b64,hashSign)
         if returnCode==1:
             keyDistributor.putAttestations(self.username,"cloudputattestation",self.block_Id,self.block_Version_No,cloudReply)
@@ -87,9 +83,10 @@ class cloudUser():
         self.b64=base64.b64encode(self.encryptedContent)
 #        return b64
     def decodeAndDecrypt(self):
-        self.b64=base64.b64decode(self.encryptedContent)
+        self.encryptedContent=base64.b64decode(self.b64)
+        self.key_block_Version_No=p.unpickle(self.key_block_Version_No)
         self.secretKey=AES.new(self.secretKey, AES.MODE_CTR, counter=lambda: self.key_block_Version_No)
-        self.content=self.secretKey.decrypt(self.b64)
+        self.content=self.secretKey.decrypt(self.encryptedContent)
 
 obj=cloudUser('u1')
 #user=user1.user
@@ -166,7 +163,7 @@ def get(block_Id,user):
     return [block_Version_No,content,hashSign,key_block_Version_No,cloud_Get_Attest,nonce,chain_Hash]
 
 
-print ("Enter p to populate cloud with dummy data. w for write, r for read, q to quit")
+print ("Enter p to populate cloud with dummy data. w for write, r for read,f to simulate Fork attack, q to quit")
 while True:
     rw=raw_input("p|r|w|q?:")
     if rw == 'q':
@@ -175,7 +172,7 @@ while True:
         obj.setBlockID(int(raw_input("Block ID(0|1|2...):?:")))
 #        obj.setSecretKey()
         obj.get()
-        if (obj.content==0):
+        if (obj.b64==0):
             print "User has no privileges"
             continue
         print ("Current Block Version:%s" %obj.block_Version_No)
@@ -212,9 +209,9 @@ while True:
             print ("Received integrity failed for Block %s I hate Cloud." %obj.block_Id)
     elif rw == 'r':
         obj.setBlockID(int(raw_input("Block ID(0|1|2...):?:")))
-        obj.setSecretKey()
+#        obj.setSecretKey()
         obj.get()
-        if (obj.content==0):
+        if (obj.b64==0):
             print "User has no privileges"
             continue
         print ("Current Block Version:%s" %obj.block_Version_No)
@@ -247,4 +244,11 @@ while True:
                         print ("Cloud Put attestation verification failed for Block %s however cloud has put the item" %obj.block_Id)
                 else:
                     print cloudReply
-
+    elif rw=='f':
+        value=raw_input("Simulate Fork Attack y|n?:")
+        if value=='y':
+            cloudStorage.simulateForkAttack(1)
+            print "Cloud will give you stale information for last modified block"
+        elif value=='n':
+            cloudStorage.simulateForkAttack(0)
+            print "Cloud will not give you stale information"
