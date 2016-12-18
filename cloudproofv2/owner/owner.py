@@ -10,8 +10,8 @@ from Crypto import Random
 totalKeysNeeded=6
 keyGenerateFlag=0
 cloudGetAttestations={}
-clientPutAttestations={}
 CloudPutAttestations={}
+ClientPutAttestations={}
 #src_data = 'To be, or not to be - that is the question.'
 #print `src_data`
 acl={0:{'r':['u1','u2','u3','cloud'],'w':['u1','u2','u3']},\
@@ -56,7 +56,26 @@ def getPublicKey(block_Id,user):
 
 def putAttestations(user,attestationType,block_Id,block_Version_No,attestation):
     print ("User:%s BlockID:%s Version:%s Type:%s" %(user,block_Id,block_Version_No,attestationType))
-#    if attestationType.lower() == "cloudputattestation":
+    if attestationType.lower() == "cloudputattestation":
+        dict1={}
+        list1=[]
+        if CloudPutAttestations.has_key(block_Id):
+            dict1=CloudPutAttestations[block_Id]
+            if dict1.has_key(block_Version_No):
+                list1=dict1[block_Version_No]
+                list1.append(attestation)
+                dict1[block_Version_No]=list1
+                CloudPutAttestations[block_Id]=dict1
+            else:
+                list1=attestation
+                dict1[block_Version_No]=list1
+                CloudPutAttestations[block_Id]=dict1
+        else:
+            list1=attestation
+            dict1[block_Version_No]=list1
+            CloudPutAttestations[block_Id]=dict1
+        
+        print length(list1)
 #        print ("%s received from %s" %(user,attestationType))
 #    elif  attestationType.lower() == "cloudgetattestation":
 #        print ("cloud get attestation received from %s" %user)
