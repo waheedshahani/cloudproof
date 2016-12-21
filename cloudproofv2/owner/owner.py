@@ -23,6 +23,15 @@ acl={0:{'r':['u1','u2','u3','cloud'],'w':['u1','u2','u3']},\
 blockKeys={0:os.urandom(32),1:os.urandom(32),2:os.urandom(32),3:os.urandom(32),4:os.urandom(32),5:os.urandom(32)}
 #This method receives any object and returns pickled version which can be serialized. 
 #on receiver end this should be received using cPickle.loads and gives back object.....
+
+def checkWriteSerializibility(): # runs serializibility checks on all CloudPutAttestations stored so far
+    if CloudPutAttestations.has_key(block_Id):
+        dict1=CloudPutAttestations[block_Id]
+        list1=dict1[block_Version_No]
+        list1.extend([block_hash,chain_hash,attestation])
+        dict1[block_Version_No]=list1
+        CloudPutAttestations[block_Id]=dict1
+
 def hasAccess(block_Id,user,accessType):
     dict1= acl[block_Id]
     userList=dict1[accessType]
@@ -56,6 +65,8 @@ def getPublicKey(block_Id,user):
 
 def putAttestations(user,attestationType,block_Id,block_Version_No,attestation):
     print ("User:%s BlockID:%s Version:%s Type:%s" %(user,block_Id,block_Version_No,attestationType))
+    block_hash='block hash for version %s dummy' %block_Version_No
+    chain_hash='chain hash for version %s dummy' %block_Version_No
     if attestationType.lower() == "cloudputattestation":
         dict1={}
         list1=[]
@@ -63,19 +74,20 @@ def putAttestations(user,attestationType,block_Id,block_Version_No,attestation):
             dict1=CloudPutAttestations[block_Id]
             if dict1.has_key(block_Version_No):
                 list1=dict1[block_Version_No]
-                list1.append(attestation)
+                list1.extend([block_hash,chain_hash,attestation])
                 dict1[block_Version_No]=list1
                 CloudPutAttestations[block_Id]=dict1
             else:
-                list1=attestation
+                list1.extend([block_hash,chain_hash,attestation])
                 dict1[block_Version_No]=list1
                 CloudPutAttestations[block_Id]=dict1
         else:
-            list1=attestation
+       	    print len(list1)
+            list1.extend([block_hash,chain_hash,attestation])
             dict1[block_Version_No]=list1
             CloudPutAttestations[block_Id]=dict1
         
-        print length(list1)
+       	print len(list1)
 #        print ("%s received from %s" %(user,attestationType))
 #    elif  attestationType.lower() == "cloudgetattestation":
 #        print ("cloud get attestation received from %s" %user)
