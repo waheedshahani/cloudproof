@@ -13,6 +13,7 @@ import os
 import pickle as p
 cloudStorage = xmlrpclib.ServerProxy("http://localhost:8000/", allow_none=True)
 keyDistributor = xmlrpclib.ServerProxy("http://localhost:8001/", allow_none=True)
+promptUsername=1
 class cloudUser():
 #Variables so far username,block_Id,secretKey
     def __init__(self,username):
@@ -165,6 +166,7 @@ def get(block_Id,user):
 
 print ("Enter p to populate cloud with dummy data. w for write, r for read,f to simulate Fork attack, q to quit")
 while True:
+    obj.username=raw_input("User [u1]?") or "u1"
     rw=raw_input("p|r|w|q?:")
     if rw == 'q':
         break
@@ -252,3 +254,5 @@ while True:
         elif value=='n':
             cloudStorage.simulateForkAttack(0)
             print "Cloud will not give you stale information"
+    elif rw=='ws': #this will run method on auditor for write serializibility check
+        keyDistributor.DoesWSViolate()
