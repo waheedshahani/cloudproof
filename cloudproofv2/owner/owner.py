@@ -24,14 +24,12 @@ blockKeys={0:os.urandom(32),1:os.urandom(32),2:os.urandom(32),3:os.urandom(32),4
 #This method receives any object and returns pickled version which can be serialized. 
 #on receiver end this should be received using cPickle.loads and gives back object.....
 
-def checkWriteSerializibility(): # runs serializibility checks on all CloudPutAttestations stored so far
-    if CloudPutAttestations.has_key(block_Id):
-        dict1=CloudPutAttestations[block_Id]
-        list1=dict1[block_Version_No]
-        list1.extend([block_hash,chain_hash,attestation])
-        dict1[block_Version_No]=list1
-        CloudPutAttestations[block_Id]=dict1
-
+def DoesWSViolate(): # runs write serializibility checks on all CloudPutAttestations stored so far
+    for block_Id, block_Data in CloudPutAttestations.iteritems():
+        for block_Version, versionData in block_Data.iteritems():
+            ref=1
+            print "ID:%s version%s list length:%s Hash%s New_Hash%s" %(block_Id,block_Version,len(versionData),versionData[ref],versionData[ref+1])
+            ref=ref+2
 def hasAccess(block_Id,user,accessType):
     dict1= acl[block_Id]
     userList=dict1[accessType]
@@ -112,6 +110,7 @@ keyServer.register_function(getSigningKey,"getSigningKey")
 keyServer.register_function(getPublicKey,"getPublicKey")
 keyServer.register_function(hasAccess,"hasAccess")
 keyServer.register_function(putAttestations,"putAttestations")
+keyServer.register_function(DoesWSViolate,"DoesWSViolate")
 keyServer.serve_forever()
 
 
