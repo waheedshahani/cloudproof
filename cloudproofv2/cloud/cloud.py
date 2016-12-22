@@ -19,6 +19,10 @@ keyDistributor = xmlrpclib.ServerProxy("http://localhost:8001/", allow_none=True
 storage={}
 staleStorage={}
 cloud_get_attestation='This is cloud put attestation'
+#backupStorage will make copy of current contents at time x. so that when fork attack is simulated at time y we just return this copy (which is x). 
+def backupStorage():
+    global staleStorage
+    staleStorage=copy.deepcopy(storage)
 def simulateForkAttack(value):
     global simulateForkAttackFlag
     simulateForkAttackFlag=int(value)
@@ -42,6 +46,8 @@ def blockExists(block_Id):
     else:
         return 1
 def put(client_Put_Attest,block_Id,key_block_Version_No,new_Version_No,New_Hash,content,hashSign):
+    global staleStorage
+    global storage
 #verifySignature is used for integrity check of message. to make sure that privileged user sent this data update
     if verifySignature(block_Id,content,hashSign)==1:
         print ("Content Integrity Verified")
@@ -61,8 +67,8 @@ def put(client_Put_Attest,block_Id,key_block_Version_No,new_Version_No,New_Hash,
         if verifySuccessfullflag==1:
             print ("Attestation Verified!")
 #stale storage will be used to simulate fork attack. giving back stale data to reader. 
-            if storage.has_key(block_Id):
-                staleStorage[block_Id]=storage[block_Id]
+#            if storage.has_key(block_Id):
+#                staleStorage[block_Id]=storage[block_Id]
             storage[block_Id]=[new_Version_No,content,New_Hash,hashSign,key_block_Version_No,client_Put_Attest,new_chain_Hash]
             #TODO store client put attestation somwhere.
             cloudPutAttestation=p.pickle(cloudPutAttestation)
@@ -98,6 +104,8 @@ def verifyClientPutAttestation(block_Id,key_block_Version_No,new_Version_No,New_
         print "New hash is not hash of block content"
         return [0,'nothing','no chain hash']
 def get(block_Id,user,nonce):
+    global staleStorage
+    global storage
 #This is to make sure that wrong hash is sent back so that client cries about integrity
     if (keyDistributor.hasAccess(block_Id,user,'r'))!=0:
         if returnWrongHash == 1:
@@ -138,4 +146,5 @@ server.register_function(get, "get")
 server.register_function(getPublicKey, "getPublicKey")
 server.register_function(blockExists,"blockExists")
 server.register_function(simulateForkAttack,"simulateForkAttack")
+server.register_function(backupStorage,"backupStorage")
 server.serve_forever()

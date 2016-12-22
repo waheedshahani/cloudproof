@@ -44,9 +44,9 @@ class cloudUser():
 #        return verifySignature(key,hashSign,h)
     def verifyCloudGetAttestation(self):
         self.cloudPublicKey=p.unpickle(cloudStorage.getPublicKey())
-        block_hashPickled=p.pickle(self.block_hash)
+        self.block_hashPickled=p.pickle(self.block_hash)
         self.key_block_Version_NoPickled=p.pickle(self.key_block_Version_No)
-        self.concat=str(self.block_Id)+str(self.key_block_Version_NoPickled)+str(self.block_Version_No)+block_hashPickled+self.nonce+self.chain_Hash
+        self.concat=str(self.block_Id)+str(self.key_block_Version_NoPickled)+str(self.block_Version_No)+self.block_hashPickled+self.nonce+self.chain_Hash
         self.hashOfElements=SHA256.new(self.concat).hexdigest()
 #Verifying verification of attestation signature
         if (self.cloudPublicKey.verify(self.hashOfElements,p.unpickle(self.cloud_Get_Attest))):
@@ -72,9 +72,10 @@ class cloudUser():
         return 1
 #    concat=str(block_Id)+str(key_block_Version_No)+str(new_Version_No)+new_Hash+encryptedEncodedContent
     def put(self,client_Put_Attest,block_Id,key_block_Version_No,new_Version_No,New_Hash,content,hashSign):
-        [returnCode,cloudReply,chain_Hash]=cloudStorage.put(client_Put_Attest,block_Id,p.pickle(self.key_block_Version_No),new_Version_No,New_Hash,self.b64,hashSign)
+        self.key_block_Version_NoPickled=p.pickle(self.key_block_Version_No)
+        [returnCode,cloudReply,chain_Hash]=cloudStorage.put(client_Put_Attest,block_Id,self.key_block_Version_NoPickled,new_Version_No,New_Hash,self.b64,hashSign)
         if returnCode==1:
-            keyDistributor.putAttestations(self.username,"cloudputattestation",self.block_Id,self.block_Version_No,cloudReply)
+            keyDistributor.putAttestations(self.username,"cloudputattestation",self.block_Id,self.block_Version_No,cloudReply,self.key_block_Version_NoPickled,self.block_hashPickled)
 #            keyDistributor.putAttestations(self.username,"clientputattestation",self.block_Id,self.block_Version_No,client_Put_Attest)
         return [returnCode,cloudReply,chain_Hash]
 
@@ -164,10 +165,10 @@ def get(block_Id,user):
     return [block_Version_No,content,hashSign,key_block_Version_No,cloud_Get_Attest,nonce,chain_Hash]
 
 
-print ("Enter p to populate cloud with dummy data. w for write, r for read,f to simulate Fork attack, q to quit")
+print ("Enter p to populate cloud with dummy data. w for write, r for read,f to simulate Fork attack, q to quit, b to backup cloud,ws for write serializibility check")
 while True:
     obj.username=raw_input("User [u1]?") or "u1"
-    rw=raw_input("p|r|w|q?:")
+    rw=raw_input("p|r|w|q|f|ws|b?:")
     if rw == 'q':
         break
     if rw == 'w':
@@ -256,3 +257,5 @@ while True:
             print "Cloud will not give you stale information"
     elif rw=='ws': #this will run method on auditor for write serializibility check
         keyDistributor.DoesWSViolate()
+    elif rw=='b':
+	cloudStorage.backupStorage()
