@@ -26,14 +26,17 @@ blockKeys={0:os.urandom(32),1:os.urandom(32),2:os.urandom(32),3:os.urandom(32),4
 
 def DoesWSViolate(): # runs write serializibility checks on all CloudPutAttestations stored so far
     for block_Id, block_Data in CloudPutAttestations.iteritems():
-        for block_Version, versionData in block_Data.iteritems():
-            if len(versionData)!=3:
-		print ("We got multiple cloud put attestations for one ID:%s version%s .Hence write serializibility violated." %(block_Id,block_Version))
-	    else:
-		print ("Write serializibility intact for ID:%s version%s" %(block_Id,block_Version))
+        if not block_Id == 1:
+            continue
+        else:
+            for block_Version_No, versionData in block_Data.iteritems():
+                if len(versionData)!=3:
+	              	print ("We got multiple cloud put attestations for  ID:%s version%s .Hence write serializibility violated." %(block_Id,block_Version_No))
+                else:
+    		        print ("Write serializibility intact for ID:%s version%s" %(block_Id,block_Version_No))
 #	    ref=0
 #            print "ID:%s version%s list length:%s Hash%s New_Hash%s" %(block_Id,block_Version,len(versionData),versionData[ref],versionData[ref+1])
-#            ref=ref+3
+#            ref=ref+5
 def hasAccess(block_Id,user,accessType):
     dict1= acl[block_Id]
     userList=dict1[accessType]
@@ -65,10 +68,10 @@ def getPublicKey(block_Id,user):
 #     print ("Public key %s.pub_key returned" %block_Id)
      return f
 
-def putAttestations(user,attestationType,block_Id,block_Version_No,attestation,key_block_Version_NoPickled,block_hashPickled):
+def putAttestations(user,attestationType,block_Id,block_Version_No,attestation,key_block_Version_NoPickled,block_hash):
     print ("User:%s BlockID:%s Version:%s Type:%s" %(user,block_Id,block_Version_No,attestationType))
-    block_hash='block hash for version %s dummy' %block_Version_No
-    chain_hash='chain hash for version %s dummy' %block_Version_No
+#    block_hash='block hash for version %s dummy' %block_Version_No
+#    chain_hash='chain hash for version %s dummy' %block_Version_No
     if attestationType.lower() == "cloudputattestation":
         dict1={}
         list1=[]
@@ -76,20 +79,20 @@ def putAttestations(user,attestationType,block_Id,block_Version_No,attestation,k
             dict1=CloudPutAttestations[block_Id]
             if dict1.has_key(block_Version_No):
                 list1=dict1[block_Version_No]
-                list1.extend([block_hash,chain_hash,attestation])
+                list1.extend([block_hash,attestation,key_block_Version_NoPickled])
                 dict1[block_Version_No]=list1
                 CloudPutAttestations[block_Id]=dict1
             else:
-                list1.extend([block_hash,chain_hash,attestation])
+                list1.extend([block_hash,attestation,key_block_Version_NoPickled])
                 dict1[block_Version_No]=list1
                 CloudPutAttestations[block_Id]=dict1
         else:
-       	    print len(list1)
-            list1.extend([block_hash,chain_hash,attestation])
+ #      	    print len(list1)
+            list1.extend([block_hash,attestation,key_block_Version_NoPickled])
             dict1[block_Version_No]=list1
             CloudPutAttestations[block_Id]=dict1
         
-       	print len(list1)
+  #     	print len(list1)
 #        print ("%s received from %s" %(user,attestationType))
 #    elif  attestationType.lower() == "cloudgetattestation":
 #        print ("cloud get attestation received from %s" %user)
