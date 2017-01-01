@@ -46,7 +46,7 @@ class cloudUser():
         self.cloudPublicKey=p.unpickle(cloudStorage.getPublicKey())
         self.block_hashPickled=p.pickle(self.block_hash)
         self.key_block_Version_NoPickled=p.pickle(self.key_block_Version_No)
-        self.concat=str(self.block_Id)+str(self.key_block_Version_NoPickled)+str(self.block_Version_No)+self.nonce+self.chain_Hash
+        self.concat=str(self.block_Id)+str(self.key_block_Version_NoPickled)+str(self.block_Version_No)+self.nonce
         self.hashOfElements=SHA256.new(self.concat).hexdigest()
 #Verifying verification of attestation signature
         if (self.cloudPublicKey.verify(self.hashOfElements,p.unpickle(self.cloud_Get_Attest))):
@@ -141,7 +141,7 @@ while True:
 
                     if returnCode == 1:
                         cloudPublicKey=p.unpickle(cloudStorage.getPublicKey())
-                        obj.hashOfElements=hash(obj.concat+chain_Hash)
+                        obj.hashOfElements=hash(obj.concat)
                         if verifySignature(cloudPublicKey,p.unpickle(cloudReply),obj.hashOfElements):
                             print ("Cloud Put attestation for Block %s looks good. I'll store it for later use" %obj.block_Id)
                         else:
@@ -184,7 +184,7 @@ while True:
 
                 if returnCode == 1:
                     cloudPublicKey=p.unpickle(cloudStorage.getPublicKey())
-                    obj.hashOfElements=hash(obj.concat+chain_Hash)
+                    obj.hashOfElements=hash(obj.concat)
                     if verifySignature(cloudPublicKey,p.unpickle(cloudReply),obj.hashOfElements):
                         print ("Cloud Put attestation for Block %s looks good. I'll store it for later use" %obj.block_Id)
                     else:

@@ -67,7 +67,8 @@ def put(client_Put_Attest,block_Id,key_block_Version_No,new_Version_No,New_Hash,
 #write serializibility assurance. checking if old_hash given by client is same as currHash stored in storage
 #        if not old_Hash==currHash:
 #            return [0,"Cloud:Data has been updated, plz read again!",'no chain hash']
-        [verifySuccessfullflag,cloudPutAttestation,new_chain_Hash]=verifyClientPutAttestation(block_Id,key_block_Version_No,new_Version_No,New_Hash,content,client_Put_Attest,currHash,currHashSign,chain_Hash)
+        [verifySuccessfullflag,cloudPutAttestation]=verifyClientPutAttestation(block_Id,key_block_Version_No,new_Version_No,New_Hash,content,client_Put_Attest,currHash,currHashSign)
+        new_chain_Hash=hash(str(cloudPutAttestation)+str(chain_Hash))
         if verifySuccessfullflag==1:
             print ("Attestation Verified!")
 #stale storage will be used to simulate fork attack. giving back stale data to reader. 
@@ -84,7 +85,7 @@ def put(client_Put_Attest,block_Id,key_block_Version_No,new_Version_No,New_Hash,
     else:
         print "Content Integrity check failed!"
         return [0,"Cloud:Content Integrity check failed!",'no chain hash']
-def verifyClientPutAttestation(block_Id,key_block_Version_No,new_Version_No,New_Hash,encryptedEncodedContent,client_Put_Attest,currHash,currHashSign,chain_Hash):
+def verifyClientPutAttestation(block_Id,key_block_Version_No,new_Version_No,New_Hash,encryptedEncodedContent,client_Put_Attest,currHash,currHashSign):
     global keyDistributor
     key=keyDistributor.getPublicKey(block_Id,'cloud')
     key=RSA.importKey(key)
@@ -92,8 +93,8 @@ def verifyClientPutAttestation(block_Id,key_block_Version_No,new_Version_No,New_
     concat=str(block_Id)+str(key_block_Version_No)+str(new_Version_No)
 #   sign=key.sign(h,'')
     hashOfElements=hash(concat)
-    new_chain_Hash=hash(concat+chain_Hash)
-    hashOfCloudPutAttest=hash(concat+new_chain_Hash)
+#    new_chain_Hash=hash(client_Put_Attest+chain_Hash)
+    hashOfCloudPutAttest=hash(concat)
 #    hashOfElements=hash(concat+chain_Hash)
 #Verifying if new hash is hash of block content
     if h == p.unpickle(New_Hash):
@@ -101,12 +102,12 @@ def verifyClientPutAttestation(block_Id,key_block_Version_No,new_Version_No,New_
         if (key.verify(hashOfElements,p.unpickle(client_Put_Attest))):
             cloudSignKey=loadSigningKey()
             sign=cloudSignKey.sign(hashOfCloudPutAttest,'')
-            return [1,sign,new_chain_Hash]
+            return [1,sign]
         else:
-            return [0,'nothing','no chain hash']
+            return [0,'nothing']
     else:
         print "New hash is not hash of block content"
-        return [0,'nothing','no chain hash']
+        return [0,'nothing']
 def get(block_Id,user,nonce):
     global staleStorage
     global storage
@@ -124,12 +125,15 @@ def get(block_Id,user,nonce):
         return [0,0,0,0,0,0,0]
 #Get pickled form of cloud_get_attestation
     cloud_Get_Attest=createCloudGetAttestation(block_Id,key_block_Version_No,block_Version_No,content,chain_Hash,nonce)
+    chain_Hash=hash(cloud_Get_Attest+chain_Hash)
+#Need to update chain hash in stored value
+    storage[block_Id]=[block_Version_No,content,new_Hash,hashSign,key_block_Version_No,client_Put_Attest,chain_Hash]
     return [block_Version_No,content,hashSign,key_block_Version_No,cloud_Get_Attest,chain_Hash,new_Hash]
 #This is just integrity check
 def createCloudGetAttestation(block_Id,key_block_Version_No,block_Version_No,content,chain_Hash,nonce):
     key=loadSigningKey()
     block_hash=p.pickle(hash(content))
-    concat=str(block_Id)+str(key_block_Version_No)+str(block_Version_No)+nonce+chain_Hash
+    concat=str(block_Id)+str(key_block_Version_No)+str(block_Version_No)+nonce
     h = hash(concat)
     sign=key.sign(h,'')
     return p.pickle(sign)
