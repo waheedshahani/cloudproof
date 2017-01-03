@@ -77,7 +77,6 @@ def put(client_Put_Attest,block_Id,key_block_Version_No,new_Version_No,New_Hash,
             storage[block_Id]=[new_Version_No,content,New_Hash,hashSign,key_block_Version_No,client_Put_Attest,new_chain_Hash]
             #TODO store client put attestation somwhere.
             cloudPutAttestation=p.pickle(cloudPutAttestation)
-            print ("Data updated to block %s . Will send back cloud put attestation" %block_Id)
             return [1,cloudPutAttestation,new_chain_Hash]
         else:
             print ("Attestation Failed! put operation denied")
@@ -125,7 +124,7 @@ def get(block_Id,user,nonce):
         return [0,0,0,0,0,0,0]
 #Get pickled form of cloud_get_attestation
     cloud_Get_Attest=createCloudGetAttestation(block_Id,key_block_Version_No,block_Version_No,content,chain_Hash,nonce)
-    chain_Hash=hash(cloud_Get_Attest+chain_Hash)
+    chain_Hash=hash(str(p.unpickle(cloud_Get_Attest))+chain_Hash)
 #Need to update chain hash in stored value
     storage[block_Id]=[block_Version_No,content,new_Hash,hashSign,key_block_Version_No,client_Put_Attest,chain_Hash]
     return [block_Version_No,content,hashSign,key_block_Version_No,cloud_Get_Attest,chain_Hash,new_Hash]

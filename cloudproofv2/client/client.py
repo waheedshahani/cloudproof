@@ -172,7 +172,7 @@ while True:
         else:
             print ("Received integrity failed for Block %s I hate Cloud." %obj.block_Id)
     elif rw=='p':
-        for block_Id in range(0, 5):
+        for block_Id in range(0, 3):
             obj.setBlockID(block_Id)
             obj.block_Version_No=0
             obj.content=''
