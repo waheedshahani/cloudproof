@@ -108,7 +108,7 @@ def hashAndSign(blockId,encryptedEncodedContent,user):
 def verifySignature(key,signedHash,hash):
     return key.verify(hash,signedHash)
 
-print ("Enter p to populate cloud with dummy data. w for write, r for read,f to simulate Fork attack, q to quit, b to backup cloud,ws for write serializibility check")
+print ("p:populate cloud with dummy data. w:write, r:read,f:simulate Fork attack, q:quit, b:backup cloud,ws:W check, rf: Read Freshness check")
 while True:
     obj.username=raw_input("User [u1]?") or "u1"
     rw=raw_input("p|r|w|q|f|ws|b?:")
@@ -203,3 +203,5 @@ while True:
         keyDistributor.DoesWSViolate()
     elif rw=='b':
 	cloudStorage.backupStorage()
+    elif rw=='rf':
+	keyDistributor.checkFreshness()
