@@ -26,40 +26,46 @@ blockKeys={0:os.urandom(32),1:os.urandom(32),2:os.urandom(32),3:os.urandom(32),4
 #This method receives any object and returns pickled version which can be serialized. 
 #on receiver end this should be received using cPickle.loads and gives back object.....
 
-def checkFreshness(block_Id):
-    block_Data=CloudAttestations[block_Id]
-    firstOccurenceFlag=1
-    list1=[]
-    for block_Version_No, versionData in block_Data.iteritems():
-        list1.extend(versionData)
-    j=0
-    print len(list1)
-    for i in range (0,len(list1)/4):
-	if i==0:
-            previousChainHash=''
-	concat=str(p.unpickle(list1[(i*4)+1]))+str(previousChainHash)
-	chainHash=SHA256.new(concat).hexdigest()
-        if chainHash==list1[(i*4)+3]:
-            print "read fresh fine"
-        else:
-            print "read freshness splitting for"
-            print ("ID:%s version:%s " %(block_Id,block_Version_No))
-        previousChainHash=chainHash
+def checkFreshness():
+    for block_Id, block_Data in CloudAttestations.iteritems():
+        block_Data=CloudAttestations[block_Id]
+        firstOccurenceFlag=1
+        list1=[]
+        for block_Version_No, versionData in block_Data.iteritems():
+            list1.extend(versionData)
+        j=1
+        for i in range (0,len(list1)/4):
+            if i==0:
+                previousChainHash=''
+            concat=str(p.unpickle(list1[(i*4)+1]))+str(previousChainHash)
+	    chainHash=SHA256.new(concat).hexdigest()
+            if chainHash==list1[(i*4)+3]:
+                pass
+#	        print "read fresh fine"
+            else:
+                print "read freshness splitting for ID:%s version:%s " %(block_Id,block_Version_No)
+	        break
+            previousChainHash=chainHash
+        print "Readfreshness guaranteed for Block ID:%s"  %block_Id
             
 
 def DoesWSViolate(): # runs write serializibility checks on all CloudPutAttestations stored so far
     for block_Id, block_Data in CloudPutAttestations.iteritems():
-        if block_Id == 1: # for testing purpose we are only checking write serializibility for block 1
+        flag=1
+        if 1 == 1: # for testing purpose we are only checking write serializibility for block 1
             for block_Version_No, versionData in block_Data.iteritems():
                 if not len(versionData)==4:
                     print ("We got multiple cloud put attestations for  ID:%s version%s .Hence W violated." %(block_Id,block_Version_No))
 		    print ("length%d" %len(versionData))
-                    break
-                else:
-                    print ("W intact for ID:%s version%s" %(block_Id,block_Version_No))
-                    checkFreshness(block_Id)
+                    flag=0
+		    break
+#                else:
+#                    print ("W intact for ID:%s version%s" %(block_Id,block_Version_No))
+#                    checkFreshness(block_Id)
         else:
             continue
+	if flag:
+	    print "W intact for Block ID:%s" %block_Id
 #	    ref=0
 #            print "ID:%s version%s list length:%s Hash%s New_Hash%s" %(block_Id,block_Version,len(versionData),versionData[ref],versionData[ref+1])
 #            ref=ref+5
@@ -129,6 +135,7 @@ def putAttestations(user,attestationType,block_Id,block_Version_No,attestation,k
 #putting cloudget or cloudput into cloudattestations for readfreshness    
     dict1={}
     list1=[]
+    attestationref={}
     attestationref=CloudAttestations
     if attestationref.has_key(block_Id):
         dict1=attestationref[block_Id]
@@ -173,6 +180,7 @@ keyServer.register_function(getPublicKey,"getPublicKey")
 keyServer.register_function(hasAccess,"hasAccess")
 keyServer.register_function(putAttestations,"putAttestations")
 keyServer.register_function(DoesWSViolate,"DoesWSViolate")
+keyServer.register_function(checkFreshness,"checkFreshness")
 keyServer.serve_forever()
 
 
